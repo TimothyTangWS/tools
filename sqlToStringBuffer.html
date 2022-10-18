@@ -1,0 +1,162 @@
+
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=gb2312" />
+        <title>将SQL转换为 StringBuffer</title>
+    </head>
+    
+    <script type="text/javascript"> 
+        
+        function getStringBufferStr(){
+        
+            var sql = document.getElementById("sql").value.toUpperCase();
+            var str = "";
+            if(sql.length != 0){
+                str = editSQL(sql);
+                document.getElementById("val").value = str;
+                document.getElementById("val").createTextRange().execCommand('selectall');
+            }
+            
+        }   
+    
+        function getSqlStr(){
+        
+            var sb = document.getElementById("val").value;
+            var str = "";
+            if(sb.length != 0){
+                var strss = sb.split("\n");
+                for(var i = 0; i<strss.length; i++){
+                    var one = strss[i];
+                    if (one.indexOf("sql.append(") >= 0) {
+                        one = one.replace(" \");","");
+                        one = one.replace("sql.append(\" ","");
+                        str += one + "\n";
+                    }
+                }
+                document.getElementById("sql").value = str;
+                document.getElementById("sql").createTextRange().execCommand('selectall');
+            }
+            
+        }
+        
+        String.prototype.trim   =   function() {
+             //   用正则表达式将前后空格
+             //   用空字符串替代。
+             return   this.replace(/(^\s*)|(\s*$)/g,   "");
+         }
+        
+        /**
+         * 编辑输入的sql
+         */
+        function editSQL(sql) {
+            
+              var enterReg = /[\n]/g;
+              var newRowReg = /[\r]/g;
+              
+              var stringReg = new RegExp("['][^']*[']");
+              var numberReg = new RegExp("[0-9]+");
+              var changedsql = "";
+              var arrs = "";
+              
+              sql = sql.replace(newRowReg, "");
+              sql = sql.replace(enterReg,"#");
+              sql = trin(sql);
+              
+              var arraySQL = sql.split("#");
+              for (i = 0; i< arraySQL.length; i++) {
+              
+                  arrs = trin(arraySQL[i]).split(" ");
+    
+                  var sql = trin(arraySQL[i]);
+    
+                  if (sql.trim() != "") {
+                      // 拼接成java中执行的sql
+                      changedsql = changedsql + "sql.append(\" " + sql + " \");" + "\n";
+                  }
+              } 
+              if (changedsql != "") {
+                var javaNewBuffer = "StringBuffer sql = new StringBuffer();\r";
+              
+                var args = "";
+                if (changedsql.indexOf("?") > 0) {
+                  args = "Object[] args = new Object[]{ ?,?,? };\n";
+                  
+                  // 如果是查询语句，生成查询语句
+                  if (changedsql.indexOf("select") > 0 || changedsql.indexOf("SELECT") > 0) {
+                      javaExSql = "Query q = entityManager.createNativeQuery(sql.toString(), Entity.class);\n";
+                  } else {
+                    console.log((changedsql.indexOf("select")))
+                      javaExSql = "getJdbcTemplate().update(sql.toString(), args);\n"
+                  }
+                } else {
+                   // 如果是查询语句，生成查询语句
+                  if (changedsql.indexOf("select") > 0 || changedsql.indexOf("SELECT") > 0) {
+                      javaExSql = "Query q = entityManager.createNativeQuery(sql.toString(), Entity.class);;\n";
+                  } else {
+                    console.log("?")
+                    console.log((changedsql.indexOf("select")))
+                      javaExSql = "getJdbcTemplate().update(sql.toString());\n"
+                  }
+                }
+              }
+              
+              return javaNewBuffer + changedsql + "\n" + args + javaExSql;
+        }
+        
+        /**
+         * 去掉空行
+         */
+        function trin(str){
+            var re = /\n/g;
+            str = str.replace(re, "");
+            re = /\r/g;
+            str = str.replace(re, "");
+            return str;
+        }
+        
+        function copy(){
+          var text = document.getElementById("sql").value;
+          window.clipboardData.setData("Text", text);
+        }
+        
+    
+        function clearValue() {
+    
+            var obj = document.getElementById("sql");
+           
+            obj.value="";
+            obj.focus();
+            document.getElementById("val").value = "";
+        }
+       
+    
+    </script>
+    
+    <body onload="clearValue()">
+        输入SQL:
+        <table width="100%" border="0">
+            <tr>
+                <td width="50%">
+                    <textarea id="sql" rows="20" style="width: 100%" style="overflow:scroll;" wrap="OFF"></textarea>
+                </td>
+                <td>
+                    =>
+                </td>
+                <td width="50%">
+                    <textarea id="val" rows="20" style="width: 100%" style="overflow:scroll"  wrap="OFF"></textarea>
+                </td>
+            </tr>
+        </table>
+        <table width="100%" border="0">
+            <td width="50%">
+                <input type="button" value="转换" id="changeBtn" onclick="getStringBufferStr()"/>
+                <input type="button" value="拷贝" onclick="copy()"/>
+                <input type="reset" value="清空" id="cancleBtn" onclick="clearValue()" />
+            </td>
+            <td width="50%">
+                &nbsp;&nbsp;
+                <input type="button" value="转换为sql" id="changeBtn" onclick="getSqlStr()"/>
+            </td>
+        </table>
+    </body>
+    </html>
