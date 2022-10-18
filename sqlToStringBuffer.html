@@ -85,17 +85,14 @@
                   if (changedsql.indexOf("select") > 0 || changedsql.indexOf("SELECT") > 0) {
                       javaExSql = "Query q = entityManager.createNativeQuery(sql.toString(), Entity.class);\n";
                   } else {
-                    console.log((changedsql.indexOf("select")))
-                      javaExSql = "getJdbcTemplate().update(sql.toString(), args);\n"
+                      javaExSql = "entityManager.createNativeQuery(sql.toString()).executeUpdate();\n"
                   }
                 } else {
                    // 如果是查询语句，生成查询语句
                   if (changedsql.indexOf("select") > 0 || changedsql.indexOf("SELECT") > 0) {
                       javaExSql = "Query q = entityManager.createNativeQuery(sql.toString(), Entity.class);;\n";
                   } else {
-                    console.log("?")
-                    console.log((changedsql.indexOf("select")))
-                      javaExSql = "getJdbcTemplate().update(sql.toString());\n"
+                      javaExSql = "entityManager.createNativeQuery(sql.toString()).executeUpdate();\n"
                   }
                 }
               }
